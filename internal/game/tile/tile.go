@@ -94,7 +94,7 @@ func (t *Tile) Eat() {
 }
 
 func (t *Tile) Accessible() bool {
-	return t.content == None || t.content == Dot || t.content == Pill
+	return t.content != Wall
 }
 
 func (t *Tile) Point() *point.Point {

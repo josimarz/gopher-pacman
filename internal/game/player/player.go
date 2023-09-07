@@ -50,7 +50,9 @@ func (p *Player) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(float64(p.tracking.CurrPoint().X), float64(p.tracking.CurrPoint().Y))
 	x, y := p.spriteCoords()
 	sx, sy := x*tile.Size, y*tile.Size
-	screen.DrawImage(assets.SpriteSheet.SubImage(image.Rect(sx, sy, sx+tile.Size, sy+tile.Size)).(*ebiten.Image), op)
+	r := image.Rect(sx, sy, sx+tile.Size, sy+tile.Size)
+	img := assets.SpriteSheet.SubImage(r).(*ebiten.Image)
+	screen.DrawImage(img, op)
 }
 
 func (p *Player) spriteCoords() (int, int) {

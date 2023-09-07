@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
+	"github.com/josimarz/gopher-pacman/internal/game/ghost"
 	_ "github.com/josimarz/gopher-pacman/internal/game/handler"
 	"github.com/josimarz/gopher-pacman/internal/game/input"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
@@ -66,12 +67,14 @@ func Instance() *Game {
 func (g *Game) Update() error {
 	input.Instance().Listen()
 	player.Instance().Update()
+	ghost.Update()
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	world.Instance().Draw(screen)
 	player.Instance().Draw(screen)
+	ghost.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
