@@ -30,8 +30,9 @@ func (d *EventDispatcher) Dispatch(e Event) {
 	}
 }
 
-func (d *EventDispatcher) Attach(name string, handler EventHandler) {
+func (d *EventDispatcher) Attach(name string, handler EventHandler) *EventDispatcher {
 	d.handlers[name] = append(d.handlers[name], handler)
+	return d
 }
 
 func (d *EventDispatcher) Clear() {

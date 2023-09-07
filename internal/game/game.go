@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	_ "github.com/josimarz/gopher-pacman/internal/game/event"
+	_ "github.com/josimarz/gopher-pacman/internal/game/handler"
 	"github.com/josimarz/gopher-pacman/internal/game/input"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"

@@ -6,25 +6,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
-	"github.com/josimarz/gopher-pacman/internal/game/position"
+	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
-)
-
-type mouthStatus uint8
-type Direction uint8
-
-const (
-	mouthOpen mouthStatus = iota + 1
-	mouthClosing
-	mouthClosed
-	mouthOpening
-)
-
-const (
-	Up Direction = iota
-	Down
-	Left
-	Right
 )
 
 var (
@@ -38,48 +21,33 @@ type Mouth struct {
 	speed  float64
 }
 
-func (m *Mouth) Update() {
-	m.delta *= m.speed
-	if m.delta >= 5 {
-		m.delta = 1
-	}
-	m.status = mouthStatus(m.delta)
-}
-
 type Player struct {
-	pos   *position.Position
-	dir   Direction
-	mouth *Mouth
-	speed uint8
+	mouth    *Mouth
+	tracking *move.PlayerTracking
 }
 
 func Instance() *Player {
 	once.Do(func() {
 		player = &Player{
-			pos:   position.New(10, 15),
-			dir:   Up,
-			speed: 1,
-			mouth: &Mouth{
-				status: mouthClosed,
-				delta:  1,
-				speed:  1.05,
-			},
+			mouth:    NewMouth(),
+			tracking: move.NewPlayerTracking(),
 		}
 	})
 	return player
 }
 
-func (p *Player) ChangeDirection(dir Direction) {
-	p.dir = dir
+func (p *Player) ChangeDir(dir move.Direction) {
+	p.tracking.ChangeDir(dir)
 }
 
 func (p *Player) Update() {
-	p.mouth.Update()
+	p.mouth.update()
+	p.tracking.Move()
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(p.pos.X*tile.Size), float64(p.pos.Y*tile.Size))
+	op.GeoM.Translate(float64(p.tracking.CurrPoint().X), float64(p.tracking.CurrPoint().Y))
 	x, y := p.spriteCoords()
 	sx, sy := x*tile.Size, y*tile.Size
 	screen.DrawImage(assets.SpriteSheet.SubImage(image.Rect(sx, sy, sx+tile.Size, sy+tile.Size)).(*ebiten.Image), op)
@@ -91,14 +59,14 @@ func (p *Player) spriteCoords() (int, int) {
 	}
 	x := 0
 	y := 0
-	switch p.dir {
-	case Up:
+	switch p.tracking.CurrDir() {
+	case move.Up:
 		x = 3
-	case Down:
+	case move.Down:
 		x = 2
-	case Left:
+	case move.Left:
 		x = 0
-	case Right:
+	case move.Right:
 		x = 1
 	}
 	if p.mouth.status == mouthOpen {
