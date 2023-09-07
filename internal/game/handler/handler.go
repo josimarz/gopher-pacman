@@ -12,18 +12,18 @@ import (
 
 func init() {
 	event.Dispatcher().
-		Attach("game.started", HandleGameStarted).
-		Attach("key.pressed", HandleKeyPressed).
-		Attach("player.reached.tile", HandlePlayerReachedTile).
-		Attach("dot.eaten", HandleDotEaten).
-		Attach("pill.eaten", HandlePillEaten)
+		Attach("game.started", handleGameStarted).
+		Attach("key.pressed", handleKeyPressed).
+		Attach("player.reached.tile", handlePlayerReachedTile).
+		Attach("dot.eaten", handleDotEaten).
+		Attach("pill.eaten", handlePillEaten)
 }
 
-func HandleGameStarted(e event.Event) {
+func handleGameStarted(e event.Event) {
 	sfx.AudioPlayer().PlayGameStart()
 }
 
-func HandleKeyPressed(e event.Event) {
+func handleKeyPressed(e event.Event) {
 	if key, ok := e.GetPayload().(ebiten.Key); ok {
 		var dir move.Direction
 		switch key.String() {
@@ -40,7 +40,7 @@ func HandleKeyPressed(e event.Event) {
 	}
 }
 
-func HandlePlayerReachedTile(e event.Event) {
+func handlePlayerReachedTile(e event.Event) {
 	if pt, ok := e.GetPayload().(*point.Point); ok {
 		tile := world.Instance().TileAt(pt)
 		if tile != nil {
@@ -49,11 +49,11 @@ func HandlePlayerReachedTile(e event.Event) {
 	}
 }
 
-func HandleDotEaten(e event.Event) {
+func handleDotEaten(e event.Event) {
 	sfx.AudioPlayer().PlayMunch1()
 	sfx.AudioPlayer().PlayMunch2()
 }
 
-func HandlePillEaten(e event.Event) {
+func handlePillEaten(e event.Event) {
 	sfx.AudioPlayer().PlayPowerPellet()
 }

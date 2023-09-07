@@ -9,27 +9,27 @@ import (
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
-type PlayerReachedTileEvent struct {
+type playerReachedTileEvent struct {
 	point     *point.Point
 	timestamp time.Time
 }
 
-func NewPlayerReachedTileEvent(point *point.Point) *PlayerReachedTileEvent {
-	return &PlayerReachedTileEvent{
+func newPlayerReachedTileEvent(point *point.Point) *playerReachedTileEvent {
+	return &playerReachedTileEvent{
 		point:     point,
 		timestamp: time.Now(),
 	}
 }
 
-func (e *PlayerReachedTileEvent) GetName() string {
+func (e *playerReachedTileEvent) GetName() string {
 	return "player.reached.tile"
 }
 
-func (e *PlayerReachedTileEvent) GetTimestamp() time.Time {
+func (e *playerReachedTileEvent) GetTimestamp() time.Time {
 	return e.timestamp
 }
 
-func (e *PlayerReachedTileEvent) GetPayload() any {
+func (e *playerReachedTileEvent) GetPayload() any {
 	return e.point
 }
 
@@ -67,7 +67,7 @@ func (t *PlayerTracking) ChangeDir(dir Direction) {
 
 func (t *PlayerTracking) Move() {
 	if t.currPoint.Equals(t.nextPoint) {
-		e := NewPlayerReachedTileEvent(t.nextPoint)
+		e := newPlayerReachedTileEvent(t.nextPoint)
 		event.Dispatcher().Dispatch(e)
 		if t.goNext(t.nextDir) {
 			t.currDir = t.nextDir

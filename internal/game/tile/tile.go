@@ -24,47 +24,47 @@ const (
 	Pill
 )
 
-type DotEatenEvent struct {
+type dotEatenEvent struct {
 	timestamp time.Time
 }
 
-func NewDotEatenEvent() *DotEatenEvent {
-	return &DotEatenEvent{
+func newDotEatenEvent() *dotEatenEvent {
+	return &dotEatenEvent{
 		timestamp: time.Now(),
 	}
 }
 
-func (e *DotEatenEvent) GetName() string {
+func (e *dotEatenEvent) GetName() string {
 	return "dot.eaten"
 }
 
-func (e *DotEatenEvent) GetTimestamp() time.Time {
+func (e *dotEatenEvent) GetTimestamp() time.Time {
 	return e.timestamp
 }
 
-func (e *DotEatenEvent) GetPayload() any {
+func (e *dotEatenEvent) GetPayload() any {
 	return struct{}{}
 }
 
-type PillEatenEvent struct {
+type pillEatenEvent struct {
 	timestamp time.Time
 }
 
-func NewPillEatenEvent() *PillEatenEvent {
-	return &PillEatenEvent{
+func newPillEatenEvent() *pillEatenEvent {
+	return &pillEatenEvent{
 		timestamp: time.Now(),
 	}
 }
 
-func (e *PillEatenEvent) GetName() string {
+func (e *pillEatenEvent) GetName() string {
 	return "pill.eaten"
 }
 
-func (e *PillEatenEvent) GetTimestamp() time.Time {
+func (e *pillEatenEvent) GetTimestamp() time.Time {
 	return e.timestamp
 }
 
-func (e *PillEatenEvent) GetPayload() any {
+func (e *pillEatenEvent) GetPayload() any {
 	return struct{}{}
 }
 
@@ -82,12 +82,12 @@ func New(content Content, pt *point.Point) *Tile {
 
 func (t *Tile) Eat() {
 	if t.content == Dot {
-		e := NewDotEatenEvent()
+		e := newDotEatenEvent()
 		event.Dispatcher().Dispatch(e)
 		t.content = None
 	}
 	if t.content == Pill {
-		e := NewPillEatenEvent()
+		e := newPillEatenEvent()
 		event.Dispatcher().Dispatch(e)
 		t.content = None
 	}

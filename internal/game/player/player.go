@@ -11,29 +11,23 @@ import (
 )
 
 var (
-	once   sync.Once
-	player *Player
+	once     sync.Once
+	instance *Player
 )
 
-type Mouth struct {
-	status mouthStatus
-	delta  float64
-	speed  float64
-}
-
 type Player struct {
-	mouth    *Mouth
+	mouth    *mouth
 	tracking *move.PlayerTracking
 }
 
 func Instance() *Player {
 	once.Do(func() {
-		player = &Player{
-			mouth:    NewMouth(),
+		instance = &Player{
+			mouth:    newMouth(),
 			tracking: move.NewPlayerTracking(),
 		}
 	})
-	return player
+	return instance
 }
 
 func (p *Player) ChangeDir(dir move.Direction) {

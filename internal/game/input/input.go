@@ -1,7 +1,6 @@
 package input
 
 import (
-	"sync"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -9,49 +8,34 @@ import (
 	"github.com/josimarz/gopher-pacman/internal/game/event"
 )
 
-var (
-	once     sync.Once
-	listener *InputListener
-)
-
-type KeyPressedEvent struct {
+type keyPressedEvent struct {
 	key       ebiten.Key
 	timestamp time.Time
 }
 
-func NewKeyPressedEvent(key ebiten.Key) *KeyPressedEvent {
-	return &KeyPressedEvent{
+func newKeyPressedEvent(key ebiten.Key) *keyPressedEvent {
+	return &keyPressedEvent{
 		key:       key,
 		timestamp: time.Now(),
 	}
 }
 
-func (e *KeyPressedEvent) GetName() string {
+func (e *keyPressedEvent) GetName() string {
 	return "key.pressed"
 }
 
-func (e *KeyPressedEvent) GetTimestamp() time.Time {
+func (e *keyPressedEvent) GetTimestamp() time.Time {
 	return e.timestamp
 }
 
-func (e *KeyPressedEvent) GetPayload() any {
+func (e *keyPressedEvent) GetPayload() any {
 	return e.key
 }
 
-type InputListener struct {
-}
-
-func Instance() *InputListener {
-	once.Do(func() {
-		listener = &InputListener{}
-	})
-	return listener
-}
-
-func (l *InputListener) Listen() {
+func Listen() {
 	keys := inpututil.AppendPressedKeys(nil)
 	for _, key := range keys {
-		e := NewKeyPressedEvent(key)
+		e := newKeyPressedEvent(key)
 		event.Dispatcher().Dispatch(e)
 	}
 }

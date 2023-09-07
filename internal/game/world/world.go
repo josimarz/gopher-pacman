@@ -16,7 +16,7 @@ const (
 var (
 	once       sync.Once
 	world      *World
-	contentSet = [][]tile.Content{
+	ContentSet = [][]tile.Content{
 		{tile.None, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.None},
 		{tile.None, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.None},
 		{tile.None, tile.Wall, tile.Pill, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Pill, tile.Wall, tile.None},
@@ -48,9 +48,9 @@ type World struct {
 func Instance() *World {
 	once.Do(func() {
 		tileSet := []*tile.Tile{}
-		for y := range contentSet {
-			for x := range contentSet[y] {
-				content := contentSet[y][x]
+		for y := range ContentSet {
+			for x := range ContentSet[y] {
+				content := ContentSet[y][x]
 				point := point.New(x*tile.Size, y*tile.Size)
 				tile := tile.New(content, point)
 				tileSet = append(tileSet, tile)

@@ -5,24 +5,24 @@ import (
 )
 
 var (
-	once       sync.Once
-	dispatcher *EventDispatcher
+	once     sync.Once
+	instance *dispatcher
 )
 
-type EventDispatcher struct {
+type dispatcher struct {
 	handlers map[string][]EventHandler
 }
 
-func Dispatcher() *EventDispatcher {
+func Dispatcher() *dispatcher {
 	once.Do(func() {
-		dispatcher = &EventDispatcher{
+		instance = &dispatcher{
 			handlers: make(map[string][]EventHandler),
 		}
 	})
-	return dispatcher
+	return instance
 }
 
-func (d *EventDispatcher) Dispatch(e Event) {
+func (d *dispatcher) Dispatch(e Event) {
 	if handlers, ok := d.handlers[e.GetName()]; ok {
 		for _, handler := range handlers {
 			handler(e)
@@ -30,11 +30,11 @@ func (d *EventDispatcher) Dispatch(e Event) {
 	}
 }
 
-func (d *EventDispatcher) Attach(name string, handler EventHandler) *EventDispatcher {
+func (d *dispatcher) Attach(name string, handler EventHandler) *dispatcher {
 	d.handlers[name] = append(d.handlers[name], handler)
 	return d
 }
 
-func (d *EventDispatcher) Clear() {
+func (d *dispatcher) Clear() {
 	d.handlers = make(map[string][]EventHandler)
 }

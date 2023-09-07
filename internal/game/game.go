@@ -16,39 +16,39 @@ import (
 )
 
 const (
-	Width  = tile.Size * world.Cols
-	Height = tile.Size * world.Rows
+	width  = tile.Size * world.Cols
+	height = tile.Size * world.Rows
 )
 
 var (
-	once sync.Once
-	game *Game
+	once     sync.Once
+	instance *Game
 )
 
-type GameStartedEvent struct {
+type gameStartedEvent struct {
 	timestamp time.Time
 }
 
-func NewGameStartedEvent() *GameStartedEvent {
-	return &GameStartedEvent{}
+func newGameStartedEvent() *gameStartedEvent {
+	return &gameStartedEvent{}
 }
 
-func (e *GameStartedEvent) GetName() string {
+func (e *gameStartedEvent) GetName() string {
 	return "game.started"
 }
 
-func (e *GameStartedEvent) GetTimestamp() time.Time {
+func (e *gameStartedEvent) GetTimestamp() time.Time {
 	return e.timestamp
 }
 
-func (e *GameStartedEvent) GetPayload() any {
+func (e *gameStartedEvent) GetPayload() any {
 	return struct{}{}
 }
 
 type Game struct{}
 
 func Start() {
-	ebiten.SetWindowSize(Width, Height)
+	ebiten.SetWindowSize(width, height)
 	ebiten.SetWindowTitle("Pacman")
 	if err := ebiten.RunGame(Instance()); err != nil {
 		log.Fatal(err)
@@ -57,15 +57,15 @@ func Start() {
 
 func Instance() *Game {
 	once.Do(func() {
-		game = &Game{}
-		e := NewGameStartedEvent()
+		instance = &Game{}
+		e := newGameStartedEvent()
 		event.Dispatcher().Dispatch(e)
 	})
-	return game
+	return instance
 }
 
 func (g *Game) Update() error {
-	input.Instance().Listen()
+	input.Listen()
 	player.Instance().Update()
 	ghost.Update()
 	return nil
