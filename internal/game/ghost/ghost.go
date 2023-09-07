@@ -3,6 +3,7 @@ package ghost
 import (
 	"image"
 	"log"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
@@ -12,12 +13,19 @@ import (
 )
 
 type Color uint8
+type FearStatus uint8
 
 const (
 	Red Color = iota
 	Pink
 	Cyan
 	Orange
+)
+
+const (
+	None FearStatus = iota
+	Frightened
+	Recovering
 )
 
 var (
@@ -45,9 +53,27 @@ func Draw(screen *ebiten.Image) {
 	Clyde.draw(screen)
 }
 
+func Frighten() {
+	Blinky.fearStatus = Frightened
+	Pinky.fearStatus = Frightened
+	Inky.fearStatus = Frightened
+	Clyde.fearStatus = Frightened
+	time.Sleep(5 * time.Second)
+	Blinky.fearStatus = Recovering
+	Pinky.fearStatus = Recovering
+	Inky.fearStatus = Recovering
+	Clyde.fearStatus = Recovering
+	time.Sleep(3 * time.Second)
+	Blinky.fearStatus = None
+	Pinky.fearStatus = None
+	Inky.fearStatus = None
+	Clyde.fearStatus = None
+}
+
 type Ghost struct {
-	color    Color
-	tracking *move.GhostTracking
+	color      Color
+	fearStatus FearStatus
+	tracking   *move.GhostTracking
 }
 
 func new(color Color) *Ghost {
@@ -88,6 +114,12 @@ func (g *Ghost) draw(screen *ebiten.Image) {
 }
 
 func (g *Ghost) spriteCoords() (int, int) {
+	if g.fearStatus == Frightened {
+		return 5, 2
+	}
+	if g.fearStatus == Recovering {
+		return 5, 3
+	}
 	x := int(g.color)
 	y := int(g.tracking.Dir()) + 2
 	return x, y

@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
+	"github.com/josimarz/gopher-pacman/internal/game/ghost"
 	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
 	"github.com/josimarz/gopher-pacman/internal/game/point"
@@ -20,7 +21,7 @@ func init() {
 }
 
 func handleGameStarted(e event.Event) {
-	sfx.AudioPlayer().PlayGameStart()
+	go sfx.AudioPlayer().PlayGameStart()
 }
 
 func handleKeyPressed(e event.Event) {
@@ -50,10 +51,13 @@ func handlePlayerReachedTile(e event.Event) {
 }
 
 func handleDotEaten(e event.Event) {
-	sfx.AudioPlayer().PlayMunch1()
-	sfx.AudioPlayer().PlayMunch2()
+	go func() {
+		sfx.AudioPlayer().PlayMunch1()
+		sfx.AudioPlayer().PlayMunch2()
+	}()
 }
 
 func handlePillEaten(e event.Event) {
-	sfx.AudioPlayer().PlayPowerPellet()
+	go sfx.AudioPlayer().PlayPowerPellet()
+	go ghost.Frighten()
 }
