@@ -2,9 +2,11 @@ package tile
 
 import (
 	"image/color"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/josimarz/gopher-pacman/internal/game/event"
 	"github.com/josimarz/gopher-pacman/internal/game/point"
 )
 
@@ -22,6 +24,50 @@ const (
 	Pill
 )
 
+type DotEatenEvent struct {
+	timestamp time.Time
+}
+
+func NewDotEatenEvent() *DotEatenEvent {
+	return &DotEatenEvent{
+		timestamp: time.Now(),
+	}
+}
+
+func (e *DotEatenEvent) GetName() string {
+	return "dot.eaten"
+}
+
+func (e *DotEatenEvent) GetTimestamp() time.Time {
+	return e.timestamp
+}
+
+func (e *DotEatenEvent) GetPayload() any {
+	return struct{}{}
+}
+
+type PillEatenEvent struct {
+	timestamp time.Time
+}
+
+func NewPillEatenEvent() *PillEatenEvent {
+	return &PillEatenEvent{
+		timestamp: time.Now(),
+	}
+}
+
+func (e *PillEatenEvent) GetName() string {
+	return "pill.eaten"
+}
+
+func (e *PillEatenEvent) GetTimestamp() time.Time {
+	return e.timestamp
+}
+
+func (e *PillEatenEvent) GetPayload() any {
+	return struct{}{}
+}
+
 type Tile struct {
 	content Content
 	point   *point.Point
@@ -34,16 +80,17 @@ func New(content Content, pt *point.Point) *Tile {
 	}
 }
 
-func (t *Tile) Eat() bool {
+func (t *Tile) Eat() {
 	if t.content == Dot {
+		e := NewDotEatenEvent()
+		event.Dispatcher().Dispatch(e)
 		t.content = None
-		return true
 	}
 	if t.content == Pill {
+		e := NewPillEatenEvent()
+		event.Dispatcher().Dispatch(e)
 		t.content = None
-		return true
 	}
-	return false
 }
 
 func (t *Tile) Accessible() bool {

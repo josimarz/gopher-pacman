@@ -14,6 +14,18 @@ var (
 	//go:embed spritesheet.png
 	SpriteSheet_png []byte
 
+	//go:embed game_start.wav
+	GameStart_wav []byte
+
+	//go:embed munch_1.wav
+	Munch1_wav []byte
+
+	//go:embed munch_2.wav
+	Munch2_wav []byte
+
+	//go:embed power_pellet.wav
+	PowerPellet_wav []byte
+
 	SpriteSheet *ebiten.Image
 )
 

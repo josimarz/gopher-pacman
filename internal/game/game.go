@@ -3,8 +3,10 @@ package game
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/josimarz/gopher-pacman/internal/game/event"
 	_ "github.com/josimarz/gopher-pacman/internal/game/handler"
 	"github.com/josimarz/gopher-pacman/internal/game/input"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
@@ -22,6 +24,26 @@ var (
 	game *Game
 )
 
+type GameStartedEvent struct {
+	timestamp time.Time
+}
+
+func NewGameStartedEvent() *GameStartedEvent {
+	return &GameStartedEvent{}
+}
+
+func (e *GameStartedEvent) GetName() string {
+	return "game.started"
+}
+
+func (e *GameStartedEvent) GetTimestamp() time.Time {
+	return e.timestamp
+}
+
+func (e *GameStartedEvent) GetPayload() any {
+	return struct{}{}
+}
+
 type Game struct{}
 
 func Start() {
@@ -35,6 +57,8 @@ func Start() {
 func Instance() *Game {
 	once.Do(func() {
 		game = &Game{}
+		e := NewGameStartedEvent()
+		event.Dispatcher().Dispatch(e)
 	})
 	return game
 }
