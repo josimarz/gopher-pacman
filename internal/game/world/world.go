@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 )
 
@@ -51,7 +50,7 @@ func Instance() *World {
 		for y := range ContentSet {
 			for x := range ContentSet[y] {
 				content := ContentSet[y][x]
-				point := point.New(x*tile.Size, y*tile.Size)
+				point := tile.NewPoint(x*tile.Size, y*tile.Size)
 				tile := tile.New(content, point)
 				tileSet = append(tileSet, tile)
 			}
@@ -69,7 +68,7 @@ func (w *World) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (w *World) Accessible(point *point.Point) bool {
+func (w *World) Accessible(point *tile.Point) bool {
 	tile := w.TileAt(point)
 	if tile == nil {
 		return false
@@ -77,7 +76,7 @@ func (w *World) Accessible(point *point.Point) bool {
 	return tile.Accessible()
 }
 
-func (w *World) TileAt(point *point.Point) *tile.Tile {
+func (w *World) TileAt(point *tile.Point) *tile.Tile {
 	for _, tile := range w.tileSet {
 		if tile.Point().Equals(point) {
 			return tile

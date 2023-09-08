@@ -3,19 +3,18 @@ package move
 import (
 	"math/rand"
 
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
 type GhostTracking struct {
 	dir       Direction
-	currPoint *point.Point
-	nextPoint *point.Point
+	currPoint *tile.Point
+	nextPoint *tile.Point
 	speed     int
 }
 
-func NewGhostTracking(pt *point.Point) *GhostTracking {
+func NewGhostTracking(pt *tile.Point) *GhostTracking {
 	return &GhostTracking{
 		dir:       Up,
 		currPoint: pt,
@@ -24,7 +23,7 @@ func NewGhostTracking(pt *point.Point) *GhostTracking {
 	}
 }
 
-func (t *GhostTracking) CurrPoint() *point.Point {
+func (t *GhostTracking) CurrPoint() *tile.Point {
 	return t.currPoint
 }
 

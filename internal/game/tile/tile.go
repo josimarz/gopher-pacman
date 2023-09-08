@@ -7,7 +7,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 )
 
 type Content uint8
@@ -70,10 +69,10 @@ func (e *pillEatenEvent) GetPayload() any {
 
 type Tile struct {
 	content Content
-	point   *point.Point
+	point   *Point
 }
 
-func New(content Content, pt *point.Point) *Tile {
+func New(content Content, pt *Point) *Tile {
 	return &Tile{
 		content: content,
 		point:   pt,
@@ -97,7 +96,7 @@ func (t *Tile) Accessible() bool {
 	return t.content != Wall
 }
 
-func (t *Tile) Point() *point.Point {
+func (t *Tile) Point() *Point {
 	return t.point
 }
 

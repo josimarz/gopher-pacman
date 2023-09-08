@@ -6,8 +6,8 @@ import (
 	"github.com/josimarz/gopher-pacman/internal/game/ghost"
 	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/sfx"
+	"github.com/josimarz/gopher-pacman/internal/game/tile"
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
@@ -42,7 +42,13 @@ func handleKeyPressed(e event.Event) {
 }
 
 func handlePlayerReachedTile(e event.Event) {
-	if pt, ok := e.GetPayload().(*point.Point); ok {
+	if pt, ok := e.GetPayload().(*tile.Point); ok {
+		ghosts := ghost.CheckCollisions(pt)
+		for _, g := range ghosts {
+			if g.FearStatus() != ghost.None {
+				g.Die()
+			}
+		}
 		tile := world.Instance().TileAt(pt)
 		if tile != nil {
 			tile.Eat()
@@ -60,4 +66,5 @@ func handleDotEaten(e event.Event) {
 func handlePillEaten(e event.Event) {
 	go sfx.AudioPlayer().PlayPowerPellet()
 	go ghost.Frighten()
+	go player.Instance().PowerUp()
 }

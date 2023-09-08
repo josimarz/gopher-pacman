@@ -4,17 +4,16 @@ import (
 	"time"
 
 	"github.com/josimarz/gopher-pacman/internal/game/event"
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
 type playerReachedTileEvent struct {
-	point     *point.Point
+	point     *tile.Point
 	timestamp time.Time
 }
 
-func newPlayerReachedTileEvent(point *point.Point) *playerReachedTileEvent {
+func newPlayerReachedTileEvent(point *tile.Point) *playerReachedTileEvent {
 	return &playerReachedTileEvent{
 		point:     point,
 		timestamp: time.Now(),
@@ -36,8 +35,8 @@ func (e *playerReachedTileEvent) GetPayload() any {
 type PlayerTracking struct {
 	currDir   Direction
 	nextDir   Direction
-	currPoint *point.Point
-	nextPoint *point.Point
+	currPoint *tile.Point
+	nextPoint *tile.Point
 	speed     int
 }
 
@@ -45,13 +44,13 @@ func NewPlayerTracking() *PlayerTracking {
 	return &PlayerTracking{
 		currDir:   Up,
 		nextDir:   Up,
-		currPoint: point.New(10*tile.Size, 15*tile.Size),
-		nextPoint: point.New(10*tile.Size, 15*tile.Size),
+		currPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
+		nextPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		speed:     2,
 	}
 }
 
-func (t *PlayerTracking) CurrPoint() *point.Point {
+func (t *PlayerTracking) CurrPoint() *tile.Point {
 	return t.currPoint
 }
 

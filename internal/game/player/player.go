@@ -3,6 +3,7 @@ package player
 import (
 	"image"
 	"sync"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
@@ -16,8 +17,9 @@ var (
 )
 
 type Player struct {
-	mouth    *mouth
-	tracking *move.PlayerTracking
+	poweredUp bool
+	mouth     *mouth
+	tracking  *move.PlayerTracking
 }
 
 func Instance() *Player {
@@ -37,6 +39,18 @@ func (p *Player) ChangeDir(dir move.Direction) {
 func (p *Player) Update() {
 	p.mouth.update()
 	p.tracking.Move()
+}
+
+func (p *Player) PowerUp() {
+	go func() {
+		p.poweredUp = true
+		time.Sleep(8 * time.Second)
+		p.poweredUp = false
+	}()
+}
+
+func (p *Player) CurrPoint() *tile.Point {
+	return p.tracking.CurrPoint()
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {

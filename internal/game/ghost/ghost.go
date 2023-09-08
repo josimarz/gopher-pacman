@@ -8,7 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
 	"github.com/josimarz/gopher-pacman/internal/game/move"
-	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 )
 
@@ -54,23 +53,31 @@ func Draw(screen *ebiten.Image) {
 }
 
 func Frighten() {
-	Blinky.fearStatus = Frightened
-	Pinky.fearStatus = Frightened
-	Inky.fearStatus = Frightened
-	Clyde.fearStatus = Frightened
-	time.Sleep(5 * time.Second)
-	Blinky.fearStatus = Recovering
-	Pinky.fearStatus = Recovering
-	Inky.fearStatus = Recovering
-	Clyde.fearStatus = Recovering
-	time.Sleep(3 * time.Second)
-	Blinky.fearStatus = None
-	Pinky.fearStatus = None
-	Inky.fearStatus = None
-	Clyde.fearStatus = None
+	go Blinky.frighten()
+	go Pinky.frighten()
+	go Inky.frighten()
+	go Clyde.frighten()
+}
+
+func CheckCollisions(pt *tile.Point) []*Ghost {
+	ghosts := []*Ghost{}
+	if Blinky.currPoint().Collide(pt) {
+		ghosts = append(ghosts, Blinky)
+	}
+	if Pinky.currPoint().Collide(pt) {
+		ghosts = append(ghosts, Pinky)
+	}
+	if Inky.currPoint().Collide(pt) {
+		ghosts = append(ghosts, Inky)
+	}
+	if Clyde.currPoint().Collide(pt) {
+		ghosts = append(ghosts, Clyde)
+	}
+	return ghosts
 }
 
 type Ghost struct {
+	dead       bool
 	color      Color
 	fearStatus FearStatus
 	tracking   *move.GhostTracking
@@ -83,20 +90,33 @@ func new(color Color) *Ghost {
 	}
 }
 
-func startPoint(color Color) *point.Point {
+func startPoint(color Color) *tile.Point {
 	switch color {
 	case Red:
-		return point.New(10*tile.Size, 7*tile.Size)
+		return tile.NewPoint(10*tile.Size, 7*tile.Size)
 	case Pink:
-		return point.New(10*tile.Size, 9*tile.Size)
+		return tile.NewPoint(10*tile.Size, 9*tile.Size)
 	case Cyan:
-		return point.New(9*tile.Size, 9*tile.Size)
+		return tile.NewPoint(9*tile.Size, 9*tile.Size)
 	case Orange:
-		return point.New(11*tile.Size, 9*tile.Size)
+		return tile.NewPoint(11*tile.Size, 9*tile.Size)
 	default:
 		log.Fatalf("Invalid color: %d", color)
 		return nil
 	}
+}
+
+func (g *Ghost) FearStatus() FearStatus {
+	return g.fearStatus
+}
+
+func (g *Ghost) Die() {
+	g.dead = true
+	g.fearStatus = None
+}
+
+func (g *Ghost) currPoint() *tile.Point {
+	return g.tracking.CurrPoint()
 }
 
 func (g *Ghost) update() {
@@ -121,6 +141,17 @@ func (g *Ghost) spriteCoords() (int, int) {
 		return 5, 3
 	}
 	x := int(g.color)
+	if g.dead {
+		x = 4
+	}
 	y := int(g.tracking.Dir()) + 2
 	return x, y
+}
+
+func (g *Ghost) frighten() {
+	g.fearStatus = Frightened
+	time.Sleep(5 * time.Second)
+	g.fearStatus = Recovering
+	time.Sleep(5 * time.Second)
+	g.fearStatus = None
 }
