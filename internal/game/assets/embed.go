@@ -26,6 +26,9 @@ var (
 	//go:embed power_pellet.wav
 	PowerPellet_wav []byte
 
+	//go:embed eat_ghost.wav
+	EatGhost_wav []byte
+
 	SpriteSheet *ebiten.Image
 )
 

@@ -25,7 +25,5 @@ func (p *Point) Clone() *Point {
 
 func (p *Point) Collide(pt *Point) bool {
 	return (p.X <= pt.X && p.X+Size >= pt.X && p.Y <= pt.Y && p.Y+Size >= pt.Y) ||
-		(pt.X <= p.X && pt.X+Size >= p.X && pt.Y <= p.Y && pt.Y+Size >= p.Y) ||
-		(p.X <= pt.X && p.X+Size >= pt.X && pt.Y <= p.Y && pt.Y+Size >= p.Y) ||
-		(pt.X <= p.X && pt.X+Size >= p.X && p.Y <= pt.Y && p.Y+Size >= pt.Y)
+		(pt.X <= p.X && pt.X+Size >= p.X && pt.Y <= p.Y && pt.Y+Size >= p.Y)
 }

@@ -44,3 +44,7 @@ func (p *audioPlayer) PlayMunch1() {
 func (p *audioPlayer) PlayMunch2() {
 	p.ctx.NewPlayerFromBytes(assets.Munch2_wav).Play()
 }
+
+func (p *audioPlayer) PlayEatGhost() {
+	p.ctx.NewPlayerFromBytes(assets.EatGhost_wav).Play()
+}

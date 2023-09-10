@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
+	"github.com/josimarz/gopher-pacman/internal/game/event"
 	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 )
@@ -30,6 +31,28 @@ const (
 var (
 	Blinky, Pinky, Inky, Clyde *Ghost
 )
+
+type ghostDiedEvent struct {
+	timestamp time.Time
+}
+
+func newGhostDiedEvent() *ghostDiedEvent {
+	return &ghostDiedEvent{
+		timestamp: time.Now(),
+	}
+}
+
+func (e *ghostDiedEvent) GetName() string {
+	return "ghost.died"
+}
+
+func (e *ghostDiedEvent) GetTimestamp() time.Time {
+	return e.timestamp
+}
+
+func (e *ghostDiedEvent) GetPayload() any {
+	return struct{}{}
+}
 
 func init() {
 	Blinky = new(Red)
@@ -77,10 +100,11 @@ func CheckCollisions(pt *tile.Point) []*Ghost {
 }
 
 type Ghost struct {
-	dead       bool
-	color      Color
-	fearStatus FearStatus
-	tracking   *move.GhostTracking
+	fearHistory []time.Time
+	dead        bool
+	color       Color
+	fearStatus  FearStatus
+	tracking    *move.GhostTracking
 }
 
 func new(color Color) *Ghost {
@@ -113,6 +137,9 @@ func (g *Ghost) FearStatus() FearStatus {
 func (g *Ghost) Die() {
 	g.dead = true
 	g.fearStatus = None
+	g.fearHistory = g.fearHistory[:0]
+	e := newGhostDiedEvent()
+	event.Dispatcher().Dispatch(e)
 }
 
 func (g *Ghost) currPoint() *tile.Point {
@@ -149,9 +176,33 @@ func (g *Ghost) spriteCoords() (int, int) {
 }
 
 func (g *Ghost) frighten() {
-	g.fearStatus = Frightened
-	time.Sleep(5 * time.Second)
-	g.fearStatus = Recovering
-	time.Sleep(5 * time.Second)
-	g.fearStatus = None
+	go func() {
+		if g.dead {
+			return
+		}
+		g.fearStatus = Frightened
+		ts := time.Now()
+		g.fearHistory = append(g.fearHistory, ts)
+		time.Sleep(5 * time.Second)
+		for _, t := range g.fearHistory {
+			if t.After(ts) {
+				return
+			}
+		}
+		if g.dead {
+			return
+		}
+		g.fearStatus = Recovering
+		time.Sleep(3 * time.Second)
+		for _, t := range g.fearHistory {
+			if t.After(ts) {
+				return
+			}
+		}
+		if g.dead {
+			return
+		}
+		g.fearStatus = None
+		g.fearHistory = g.fearHistory[:0]
+	}()
 }

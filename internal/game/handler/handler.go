@@ -17,7 +17,8 @@ func init() {
 		Attach("key.pressed", handleKeyPressed).
 		Attach("player.reached.tile", handlePlayerReachedTile).
 		Attach("dot.eaten", handleDotEaten).
-		Attach("pill.eaten", handlePillEaten)
+		Attach("pill.eaten", handlePillEaten).
+		Attach("ghost.died", handleGhostDied)
 }
 
 func handleGameStarted(e event.Event) {
@@ -66,5 +67,8 @@ func handleDotEaten(e event.Event) {
 func handlePillEaten(e event.Event) {
 	go sfx.AudioPlayer().PlayPowerPellet()
 	go ghost.Frighten()
-	go player.Instance().PowerUp()
+}
+
+func handleGhostDied(e event.Event) {
+	go sfx.AudioPlayer().PlayEatGhost()
 }
