@@ -1,4 +1,4 @@
-package move
+package direction
 
 type Direction uint8
 

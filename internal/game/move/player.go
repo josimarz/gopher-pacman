@@ -3,6 +3,7 @@ package move
 import (
 	"time"
 
+	"github.com/josimarz/gopher-pacman/internal/game/direction"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 	"github.com/josimarz/gopher-pacman/internal/game/world"
@@ -33,8 +34,9 @@ func (e *playerReachedTileEvent) GetPayload() any {
 }
 
 type PlayerTracking struct {
-	currDir   Direction
-	nextDir   Direction
+	currDir   direction.Direction
+	nextDir   direction.Direction
+	prevPoint *tile.Point
 	currPoint *tile.Point
 	nextPoint *tile.Point
 	speed     int
@@ -42,23 +44,28 @@ type PlayerTracking struct {
 
 func NewPlayerTracking() *PlayerTracking {
 	return &PlayerTracking{
-		currDir:   Up,
-		nextDir:   Up,
+		currDir:   direction.Up,
+		nextDir:   direction.Up,
+		prevPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		currPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		nextPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		speed:     2,
 	}
 }
 
+func (t *PlayerTracking) PrevPoint() *tile.Point {
+	return t.prevPoint
+}
+
 func (t *PlayerTracking) CurrPoint() *tile.Point {
 	return t.currPoint
 }
 
-func (t *PlayerTracking) CurrDir() Direction {
+func (t *PlayerTracking) CurrDir() direction.Direction {
 	return t.currDir
 }
 
-func (t *PlayerTracking) ChangeDir(dir Direction) {
+func (t *PlayerTracking) ChangeDir(dir direction.Direction) {
 	if t.nextDir != dir {
 		t.nextDir = dir
 	}
@@ -66,6 +73,7 @@ func (t *PlayerTracking) ChangeDir(dir Direction) {
 
 func (t *PlayerTracking) Move() {
 	if t.currPoint.Equals(t.nextPoint) {
+		t.prevPoint = t.currPoint.Clone()
 		e := newPlayerReachedTileEvent(t.nextPoint)
 		event.Dispatcher().Dispatch(e)
 		if t.goNext(t.nextDir) {
@@ -78,15 +86,15 @@ func (t *PlayerTracking) Move() {
 	t.moveY()
 }
 
-func (t *PlayerTracking) goNext(dir Direction) bool {
+func (t *PlayerTracking) goNext(dir direction.Direction) bool {
 	switch dir {
-	case Up:
+	case direction.Up:
 		t.nextPoint.Y -= tile.Size
-	case Down:
+	case direction.Down:
 		t.nextPoint.Y += tile.Size
-	case Left:
+	case direction.Left:
 		t.nextPoint.X -= tile.Size
-	case Right:
+	case direction.Right:
 		t.nextPoint.X += tile.Size
 	}
 	if !world.Instance().Accessible(t.nextPoint) {

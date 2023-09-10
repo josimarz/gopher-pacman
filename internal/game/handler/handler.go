@@ -2,9 +2,9 @@ package handler
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/josimarz/gopher-pacman/internal/game/direction"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
 	"github.com/josimarz/gopher-pacman/internal/game/ghost"
-	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/player"
 	"github.com/josimarz/gopher-pacman/internal/game/sfx"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
@@ -16,6 +16,7 @@ func init() {
 		Attach("game.started", handleGameStarted).
 		Attach("key.pressed", handleKeyPressed).
 		Attach("player.reached.tile", handlePlayerReachedTile).
+		Attach("ghost.reached.tile", handleGhostReachedTile).
 		Attach("dot.eaten", handleDotEaten).
 		Attach("pill.eaten", handlePillEaten).
 		Attach("ghost.died", handleGhostDied)
@@ -27,16 +28,16 @@ func handleGameStarted(e event.Event) {
 
 func handleKeyPressed(e event.Event) {
 	if key, ok := e.GetPayload().(ebiten.Key); ok {
-		var dir move.Direction
+		var dir direction.Direction
 		switch key.String() {
 		case "ArrowUp", "W":
-			dir = move.Up
+			dir = direction.Up
 		case "ArrowDown", "S":
-			dir = move.Down
+			dir = direction.Down
 		case "ArrowLeft", "A":
-			dir = move.Left
+			dir = direction.Left
 		case "ArrowRight", "D":
-			dir = move.Right
+			dir = direction.Right
 		}
 		player.Instance().ChangeDir(dir)
 	}
@@ -54,6 +55,12 @@ func handlePlayerReachedTile(e event.Event) {
 		if tile != nil {
 			tile.Eat()
 		}
+	}
+}
+
+func handleGhostReachedTile(e event.Event) {
+	if _, ok := e.GetPayload().(*tile.Point); ok {
+		//
 	}
 }
 
