@@ -17,6 +17,7 @@ const (
 
 const (
 	None Content = iota
+	Outline
 	Wall
 	Door
 	Dot

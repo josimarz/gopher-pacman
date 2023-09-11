@@ -40,17 +40,13 @@ func (p *Player) Update() {
 	p.tracking.Move()
 }
 
-func (p *Player) PrevPoint() *tile.Point {
-	return p.tracking.PrevPoint()
-}
-
-func (p *Player) CurrPoint() *tile.Point {
+func (p *Player) currPoint() *tile.Point {
 	return p.tracking.CurrPoint()
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(p.tracking.CurrPoint().X), float64(p.tracking.CurrPoint().Y))
+	op.GeoM.Translate(float64(p.currPoint().X), float64(p.currPoint().Y))
 	x, y := p.spriteCoords()
 	sx, sy := x*tile.Size, y*tile.Size
 	r := image.Rect(sx, sy, sx+tile.Size, sy+tile.Size)

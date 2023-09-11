@@ -16,7 +16,6 @@ func init() {
 		Attach("game.started", handleGameStarted).
 		Attach("key.pressed", handleKeyPressed).
 		Attach("player.reached.tile", handlePlayerReachedTile).
-		Attach("ghost.reached.tile", handleGhostReachedTile).
 		Attach("dot.eaten", handleDotEaten).
 		Attach("pill.eaten", handlePillEaten).
 		Attach("ghost.died", handleGhostDied)
@@ -55,12 +54,6 @@ func handlePlayerReachedTile(e event.Event) {
 		if tile != nil {
 			tile.Eat()
 		}
-	}
-}
-
-func handleGhostReachedTile(e event.Event) {
-	if _, ok := e.GetPayload().(*tile.Point); ok {
-		//
 	}
 }
 

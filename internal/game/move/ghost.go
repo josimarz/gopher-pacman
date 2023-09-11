@@ -5,50 +5,35 @@ import (
 	"time"
 
 	"github.com/josimarz/gopher-pacman/internal/game/direction"
-	"github.com/josimarz/gopher-pacman/internal/game/event"
+	"github.com/josimarz/gopher-pacman/internal/game/gs"
 	"github.com/josimarz/gopher-pacman/internal/game/stack"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
-type ghostReachedTileEvent struct {
-	point     *tile.Point
-	timestamp time.Time
-}
-
-func newGhostReachedTileEvent(pt *tile.Point) *ghostReachedTileEvent {
-	return &ghostReachedTileEvent{
-		point:     pt,
-		timestamp: time.Now(),
-	}
-}
-
-func (e *ghostReachedTileEvent) GetName() string {
-	return "ghost.reached.tile"
-}
-
-func (e *ghostReachedTileEvent) GetTimestamp() time.Time {
-	return e.timestamp
-}
-
-func (e *ghostReachedTileEvent) GetPayload() any {
-	return e.point
-}
+var (
+	r *rand.Rand
+)
 
 type GhostTracking struct {
 	path      *stack.Stack[tile.Point]
 	dir       direction.Direction
-	prevPoint *tile.Point
 	currPoint *tile.Point
 	nextPoint *tile.Point
 	speed     int
 }
 
+func init() {
+	src := rand.NewSource(time.Now().UnixNano())
+	r = rand.New(src)
+}
+
 func NewGhostTracking(pt *tile.Point) *GhostTracking {
 	return &GhostTracking{
+		path:      stack.New[tile.Point](),
 		dir:       direction.Up,
-		currPoint: pt,
-		nextPoint: pt,
+		currPoint: pt.Clone(),
+		nextPoint: pt.Clone(),
 		speed:     1,
 	}
 }
@@ -63,39 +48,33 @@ func (t *GhostTracking) Dir() direction.Direction {
 
 func (t *GhostTracking) Move() {
 	if t.currPoint.Equals(t.nextPoint) {
-		e := newGhostReachedTileEvent(t.currPoint)
-		event.Dispatcher().Dispatch(e)
-		t.nextDir()
+		if t.path == nil || t.path.Empty() {
+			t.recreatePath()
+		}
+		t.nextPoint = t.path.Pop()
+		t.dir = t.currPoint.Dir(t.nextPoint)
 	}
 	t.moveX()
 	t.moveY()
 }
 
-func (t *GhostTracking) nextDir() {
+func (t *GhostTracking) recreatePath() {
+	var goal *tile.Point
+	var content tile.Content
 	for {
-		if dir := direction.Direction(rand.Intn(4)); t.goNext(dir) {
-			t.dir = dir
-			return
+		x := r.Intn(21)
+		y := r.Intn(21)
+		content = world.ContentSet[y][x]
+		goal = tile.NewPoint(x*tile.Size, y*tile.Size)
+		if goal.Equals(t.currPoint) {
+			continue
+		}
+		if content != tile.Outline && content != tile.Wall {
+			break
 		}
 	}
-}
-
-func (t *GhostTracking) goNext(dir direction.Direction) bool {
-	switch dir {
-	case direction.Up:
-		t.nextPoint.Y -= tile.Size
-	case direction.Down:
-		t.nextPoint.Y += tile.Size
-	case direction.Left:
-		t.nextPoint.X -= tile.Size
-	case direction.Right:
-		t.nextPoint.X += tile.Size
-	}
-	if !world.Instance().Accessible(t.nextPoint) {
-		t.nextPoint = t.currPoint.Clone()
-		return false
-	}
-	return true
+	dfs := gs.NewDepthFirstSearch()
+	t.path = dfs.Run(t.currPoint.Clone(), goal)
 }
 
 func (t *GhostTracking) moveX() {

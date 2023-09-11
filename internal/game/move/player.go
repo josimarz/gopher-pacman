@@ -36,7 +36,6 @@ func (e *playerReachedTileEvent) GetPayload() any {
 type PlayerTracking struct {
 	currDir   direction.Direction
 	nextDir   direction.Direction
-	prevPoint *tile.Point
 	currPoint *tile.Point
 	nextPoint *tile.Point
 	speed     int
@@ -46,15 +45,10 @@ func NewPlayerTracking() *PlayerTracking {
 	return &PlayerTracking{
 		currDir:   direction.Up,
 		nextDir:   direction.Up,
-		prevPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		currPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		nextPoint: tile.NewPoint(10*tile.Size, 15*tile.Size),
 		speed:     2,
 	}
-}
-
-func (t *PlayerTracking) PrevPoint() *tile.Point {
-	return t.prevPoint
 }
 
 func (t *PlayerTracking) CurrPoint() *tile.Point {
@@ -73,7 +67,6 @@ func (t *PlayerTracking) ChangeDir(dir direction.Direction) {
 
 func (t *PlayerTracking) Move() {
 	if t.currPoint.Equals(t.nextPoint) {
-		t.prevPoint = t.currPoint.Clone()
 		e := newPlayerReachedTileEvent(t.nextPoint)
 		event.Dispatcher().Dispatch(e)
 		if t.goNext(t.nextDir) {

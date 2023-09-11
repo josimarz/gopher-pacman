@@ -176,33 +176,31 @@ func (g *Ghost) spriteCoords() (int, int) {
 }
 
 func (g *Ghost) frighten() {
-	go func() {
-		if g.dead {
+	if g.dead {
+		return
+	}
+	g.fearStatus = Frightened
+	ts := time.Now()
+	g.fearHistory = append(g.fearHistory, ts)
+	time.Sleep(5 * time.Second)
+	for _, t := range g.fearHistory {
+		if t.After(ts) {
 			return
 		}
-		g.fearStatus = Frightened
-		ts := time.Now()
-		g.fearHistory = append(g.fearHistory, ts)
-		time.Sleep(5 * time.Second)
-		for _, t := range g.fearHistory {
-			if t.After(ts) {
-				return
-			}
-		}
-		if g.dead {
+	}
+	if g.dead {
+		return
+	}
+	g.fearStatus = Recovering
+	time.Sleep(3 * time.Second)
+	for _, t := range g.fearHistory {
+		if t.After(ts) {
 			return
 		}
-		g.fearStatus = Recovering
-		time.Sleep(3 * time.Second)
-		for _, t := range g.fearHistory {
-			if t.After(ts) {
-				return
-			}
-		}
-		if g.dead {
-			return
-		}
-		g.fearStatus = None
-		g.fearHistory = g.fearHistory[:0]
-	}()
+	}
+	if g.dead {
+		return
+	}
+	g.fearStatus = None
+	g.fearHistory = g.fearHistory[:0]
 }

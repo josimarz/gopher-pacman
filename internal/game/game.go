@@ -65,9 +65,9 @@ func Instance() *Game {
 }
 
 func (g *Game) Update() error {
-	go input.Listen()
-	go player.Instance().Update()
-	go ghost.Update()
+	input.Listen()
+	player.Instance().Update()
+	ghost.Update()
 	return nil
 }
 

@@ -27,12 +27,16 @@ func (s *Stack[T]) Pop() *T {
 	}
 	i := len(s.items) - 1
 	item := s.items[i]
-	s.items = s.items[0:i]
+	s.items = s.items[:i]
 	return item
 }
 
 func (s *Stack[T]) Empty() bool {
-	return len(s.items) == 0
+	return s.Len() == 0
+}
+
+func (s *Stack[T]) Len() int {
+	return len(s.items)
 }
 
 func (s *Stack[T]) Clear() {
