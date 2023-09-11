@@ -8,7 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
 	"github.com/josimarz/gopher-pacman/internal/game/event"
-	"github.com/josimarz/gopher-pacman/internal/game/move"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
 )
 
@@ -104,14 +103,15 @@ type Ghost struct {
 	dead        bool
 	color       Color
 	fearStatus  FearStatus
-	tracking    *move.GhostTracking
+	tracking    *GhostTracking
 }
 
 func new(color Color) *Ghost {
-	return &Ghost{
-		color:    color,
-		tracking: move.NewGhostTracking(startPoint(color)),
-	}
+	g := &Ghost{}
+	tracking := NewGhostTracking(g, startPoint(color))
+	g.color = color
+	g.tracking = tracking
+	return g
 }
 
 func startPoint(color Color) *tile.Point {
@@ -203,4 +203,8 @@ func (g *Ghost) frighten() {
 	}
 	g.fearStatus = None
 	g.fearHistory = g.fearHistory[:0]
+}
+
+func (g *Ghost) respawn() {
+	g.dead = false
 }

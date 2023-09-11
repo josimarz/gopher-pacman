@@ -1,4 +1,4 @@
-package move
+package ghost
 
 import (
 	"math/rand"
@@ -16,6 +16,8 @@ var (
 )
 
 type GhostTracking struct {
+	goingHome bool
+	ghost     *Ghost
 	path      *stack.Stack[tile.Point]
 	dir       direction.Direction
 	currPoint *tile.Point
@@ -28,8 +30,9 @@ func init() {
 	r = rand.New(src)
 }
 
-func NewGhostTracking(pt *tile.Point) *GhostTracking {
+func NewGhostTracking(ghost *Ghost, pt *tile.Point) *GhostTracking {
 	return &GhostTracking{
+		ghost:     ghost,
 		path:      stack.New[tile.Point](),
 		dir:       direction.Up,
 		currPoint: pt.Clone(),
@@ -48,7 +51,16 @@ func (t *GhostTracking) Dir() direction.Direction {
 
 func (t *GhostTracking) Move() {
 	if t.currPoint.Equals(t.nextPoint) {
+		if t.ghost.dead && !t.goingHome {
+			t.goHome()
+		}
 		if t.path == nil || t.path.Empty() {
+			if t.goingHome {
+				t.goingHome = false
+			}
+			if t.ghost.dead {
+				t.ghost.respawn()
+			}
 			t.recreatePath()
 		}
 		t.nextPoint = t.path.Pop()
@@ -56,6 +68,14 @@ func (t *GhostTracking) Move() {
 	}
 	t.moveX()
 	t.moveY()
+}
+
+func (t *GhostTracking) goHome() {
+	t.goingHome = true
+	dfs := gs.NewDepthFirstSearch()
+	goal := tile.NewPoint(10*tile.Size, 9*tile.Size)
+	t.path.Clear()
+	t.path = dfs.Run(t.nextPoint.Clone(), goal)
 }
 
 func (t *GhostTracking) recreatePath() {
