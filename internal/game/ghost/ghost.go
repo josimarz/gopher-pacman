@@ -3,16 +3,19 @@ package ghost
 import (
 	"image"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/josimarz/gopher-pacman/internal/game/assets"
-	"github.com/josimarz/gopher-pacman/internal/game/event"
+	"github.com/josimarz/gopher-pacman/internal/game/direction"
+	"github.com/josimarz/gopher-pacman/internal/game/ia"
+	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
+	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
 type Color uint8
-type FearStatus uint8
 
 const (
 	Red Color = iota
@@ -21,50 +24,24 @@ const (
 	Orange
 )
 
+type Status uint8
+
 const (
-	None FearStatus = iota
-	Frightened
+	Alive Status = iota
+	Dizzy
 	Recovering
+	Dead
 )
 
 var (
 	Blinky, Pinky, Inky, Clyde *Ghost
 )
 
-type ghostDiedEvent struct {
-	timestamp time.Time
-}
-
-func newGhostDiedEvent() *ghostDiedEvent {
-	return &ghostDiedEvent{
-		timestamp: time.Now(),
-	}
-}
-
-func (e *ghostDiedEvent) GetName() string {
-	return "ghost.died"
-}
-
-func (e *ghostDiedEvent) GetTimestamp() time.Time {
-	return e.timestamp
-}
-
-func (e *ghostDiedEvent) GetPayload() any {
-	return struct{}{}
-}
-
 func init() {
 	Blinky = new(Red)
 	Pinky = new(Pink)
 	Inky = new(Cyan)
 	Clyde = new(Orange)
-}
-
-func Update() {
-	Blinky.update()
-	Pinky.update()
-	Inky.update()
-	Clyde.update()
 }
 
 func Draw(screen *ebiten.Image) {
@@ -74,137 +51,185 @@ func Draw(screen *ebiten.Image) {
 	Clyde.draw(screen)
 }
 
-func Frighten() {
-	go Blinky.frighten()
-	go Pinky.frighten()
-	go Inky.frighten()
-	go Clyde.frighten()
+func Update() {
+	Blinky.move()
+	Pinky.move()
+	Inky.move()
+	Clyde.move()
 }
 
-func CheckCollisions(pt *tile.Point) []*Ghost {
-	ghosts := []*Ghost{}
-	if Blinky.currPoint().Collide(pt) {
-		ghosts = append(ghosts, Blinky)
-	}
-	if Pinky.currPoint().Collide(pt) {
-		ghosts = append(ghosts, Pinky)
-	}
-	if Inky.currPoint().Collide(pt) {
-		ghosts = append(ghosts, Inky)
-	}
-	if Clyde.currPoint().Collide(pt) {
-		ghosts = append(ghosts, Clyde)
-	}
-	return ghosts
+func DizzyAll() {
+	go Blinky.dizzyMe()
+	go Pinky.dizzyMe()
+	go Inky.dizzyMe()
+	go Clyde.dizzyMe()
 }
 
 type Ghost struct {
-	fearHistory []time.Time
-	dead        bool
-	color       Color
-	fearStatus  FearStatus
-	tracking    *GhostTracking
+	goingHome bool
+	path      ia.Stack[point.Point]
+	status    Status
+	color     Color
+	dir       direction.Direction
+	currPoint *point.Point
+	nextPoint *point.Point
+	speed     int
+	dizziness []time.Time
 }
 
 func new(color Color) *Ghost {
-	g := &Ghost{}
-	tracking := NewGhostTracking(g, startPoint(color))
-	g.color = color
-	g.tracking = tracking
-	return g
+	p := startPoint(color)
+	return &Ghost{
+		status:    Alive,
+		color:     color,
+		dir:       direction.Up,
+		currPoint: p.Clone(),
+		nextPoint: p.Clone(),
+		speed:     1,
+	}
 }
 
-func startPoint(color Color) *tile.Point {
+func startPoint(color Color) *point.Point {
 	switch color {
 	case Red:
-		return tile.NewPoint(10*tile.Size, 7*tile.Size)
+		return point.New(10*tile.Size, 7*tile.Size)
 	case Pink:
-		return tile.NewPoint(10*tile.Size, 9*tile.Size)
+		return point.New(10*tile.Size, 9*tile.Size)
 	case Cyan:
-		return tile.NewPoint(9*tile.Size, 9*tile.Size)
+		return point.New(9*tile.Size, 9*tile.Size)
 	case Orange:
-		return tile.NewPoint(11*tile.Size, 9*tile.Size)
+		return point.New(11*tile.Size, 9*tile.Size)
 	default:
-		log.Fatalf("Invalid color: %d", color)
+		log.Fatalf("invalid color: %v", color)
 		return nil
 	}
 }
 
-func (g *Ghost) FearStatus() FearStatus {
-	return g.fearStatus
+func (g *Ghost) CurrPoint() *point.Point {
+	return g.currPoint
+}
+
+func (g *Ghost) Status() Status {
+	return g.status
 }
 
 func (g *Ghost) Die() {
-	g.dead = true
-	g.fearStatus = None
-	g.fearHistory = g.fearHistory[:0]
-	e := newGhostDiedEvent()
-	event.Dispatcher().Dispatch(e)
+	g.status = Dead
 }
 
-func (g *Ghost) currPoint() *tile.Point {
-	return g.tracking.CurrPoint()
+func (g *Ghost) move() {
+	if g.currPoint.Equals(g.nextPoint) {
+		if g.status == Dead && !g.goingHome {
+			g.goHome()
+		}
+		if g.path.Empty() {
+			if g.goingHome {
+				g.goingHome = false
+			}
+			if g.status == Dead {
+				g.status = Alive
+			}
+			g.recreatePath()
+		}
+		g.nextPoint = g.path.Pop()
+		g.dir = g.currPoint.Dir(g.nextPoint)
+	}
+	g.moveX()
+	g.moveY()
 }
 
-func (g *Ghost) update() {
-	g.tracking.Move()
+func (g *Ghost) goHome() {
+	g.goingHome = true
+	goal := point.New(10*tile.Size, 9*tile.Size)
+	g.path = ia.DepthFirstSearch(g.currPoint, goal)
+}
+
+func (g *Ghost) recreatePath() {
+	src := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(src)
+	var goal *point.Point
+	for {
+		x := r.Intn(21)
+		y := r.Intn(21)
+		goal = point.New(x*tile.Size, y*tile.Size)
+		if goal.Equals(g.currPoint) {
+			continue
+		}
+		if world.Reachable(goal) {
+			break
+		}
+	}
+	g.path = ia.DepthFirstSearch(g.currPoint, goal)
+}
+
+func (g *Ghost) moveX() {
+	if g.currPoint.X < g.nextPoint.X {
+		g.currPoint.X += g.speed
+	} else if g.currPoint.X > g.nextPoint.X {
+		g.currPoint.X -= g.speed
+	}
+}
+
+func (g *Ghost) moveY() {
+	if g.currPoint.Y < g.nextPoint.Y {
+		g.currPoint.Y += g.speed
+	} else if g.currPoint.Y > g.nextPoint.Y {
+		g.currPoint.Y -= g.speed
+	}
 }
 
 func (g *Ghost) draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(g.tracking.CurrPoint().X), float64(g.tracking.CurrPoint().Y))
-	x, y := g.spriteCoords()
+	op.GeoM.Translate(float64(g.currPoint.X), float64(g.currPoint.Y))
+	x, y := g.spritesCoords()
 	sx, sy := x*tile.Size, y*tile.Size
 	r := image.Rect(sx, sy, sx+tile.Size, sy+tile.Size)
 	img := assets.SpriteSheet.SubImage(r).(*ebiten.Image)
 	screen.DrawImage(img, op)
 }
 
-func (g *Ghost) spriteCoords() (int, int) {
-	if g.fearStatus == Frightened {
+func (g *Ghost) spritesCoords() (int, int) {
+	switch g.status {
+	case Alive:
+		return int(g.color), int(g.dir) + 2
+	case Dizzy:
 		return 5, 2
-	}
-	if g.fearStatus == Recovering {
+	case Recovering:
 		return 5, 3
+	case Dead:
+		return 4, int(g.dir) + 2
+	default:
+		log.Fatalf("invalid status: %d", g.status)
+		return 0, 0
 	}
-	x := int(g.color)
-	if g.dead {
-		x = 4
-	}
-	y := int(g.tracking.Dir()) + 2
-	return x, y
 }
 
-func (g *Ghost) frighten() {
-	if g.dead {
+func (g *Ghost) dizzyMe() {
+	if g.status == Dead {
 		return
 	}
-	g.fearStatus = Frightened
+	g.status = Dizzy
 	ts := time.Now()
-	g.fearHistory = append(g.fearHistory, ts)
+	g.dizziness = append(g.dizziness, ts)
+	for _, t := range g.dizziness {
+		if t.After(ts) {
+			return
+		}
+	}
 	time.Sleep(5 * time.Second)
-	for _, t := range g.fearHistory {
-		if t.After(ts) {
-			return
-		}
-	}
-	if g.dead {
+	if g.status == Dead {
 		return
 	}
-	g.fearStatus = Recovering
+	g.status = Recovering
 	time.Sleep(3 * time.Second)
-	for _, t := range g.fearHistory {
+	for _, t := range g.dizziness {
 		if t.After(ts) {
 			return
 		}
 	}
-	if g.dead {
+	if g.status == Dead {
 		return
 	}
-	g.fearStatus = None
-	g.fearHistory = g.fearHistory[:0]
-}
-
-func (g *Ghost) respawn() {
-	g.dead = false
+	g.status = Alive
+	g.dizziness = g.dizziness[:0]
 }

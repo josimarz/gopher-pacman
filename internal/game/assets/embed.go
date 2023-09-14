@@ -29,6 +29,9 @@ var (
 	//go:embed eat_ghost.wav
 	EatGhost_wav []byte
 
+	//go:embed death_1.wav
+	Death1_wav []byte
+
 	SpriteSheet *ebiten.Image
 )
 

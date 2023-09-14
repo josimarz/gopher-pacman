@@ -1,10 +1,18 @@
 package world
 
 import (
-	"sync"
-
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/josimarz/gopher-pacman/internal/game/point"
 	"github.com/josimarz/gopher-pacman/internal/game/tile"
+)
+
+type Direction uint8
+
+const (
+	Up Direction = iota
+	Down
+	Left
+	Right
 )
 
 const (
@@ -13,12 +21,11 @@ const (
 )
 
 var (
-	once       sync.Once
 	world      *World
-	ContentSet = [][]tile.Content{
+	contentSet = [][]tile.Content{
 		{tile.Outline, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Outline},
-		{tile.Outline, tile.Wall, tile.Pill, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Pill, tile.Wall, tile.Outline},
+		{tile.Outline, tile.Wall, tile.PowerPellet, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.PowerPellet, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Outline},
@@ -31,7 +38,7 @@ var (
 		{tile.Outline, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.None, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.None, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Outline},
-		{tile.Outline, tile.Wall, tile.Pill, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.None, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Pill, tile.Wall, tile.Outline},
+		{tile.Outline, tile.Wall, tile.PowerPellet, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.None, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.PowerPellet, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Dot, tile.Dot, tile.Dot, tile.Dot, tile.Wall, tile.Outline},
 		{tile.Outline, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Dot, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Wall, tile.Dot, tile.Wall, tile.Outline},
@@ -40,44 +47,53 @@ var (
 	}
 )
 
+func init() {
+	tiles := []*tile.Tile{}
+	for y := range contentSet {
+		for x := range contentSet[y] {
+			content := contentSet[y][x]
+			point := point.New(x*tile.Size, y*tile.Size)
+			tile := tile.New(content, point)
+			tiles = append(tiles, tile)
+		}
+	}
+	world = &World{
+		tiles: tiles,
+	}
+}
+
+func Draw(screen *ebiten.Image) {
+	world.draw(screen)
+}
+
+func Reachable(point *point.Point) bool {
+	return world.reachable(point)
+}
+
+func TileAt(point *point.Point) *tile.Tile {
+	return world.tileAt(point)
+}
+
 type World struct {
-	tileSet []*tile.Tile
+	tiles []*tile.Tile
 }
 
-func Instance() *World {
-	once.Do(func() {
-		tileSet := []*tile.Tile{}
-		for y := range ContentSet {
-			for x := range ContentSet[y] {
-				content := ContentSet[y][x]
-				point := tile.NewPoint(x*tile.Size, y*tile.Size)
-				tile := tile.New(content, point)
-				tileSet = append(tileSet, tile)
-			}
-		}
-		world = &World{
-			tileSet: tileSet,
-		}
-	})
-	return world
-}
-
-func (w *World) Draw(screen *ebiten.Image) {
-	for _, tile := range w.tileSet {
+func (w *World) draw(screen *ebiten.Image) {
+	for _, tile := range w.tiles {
 		tile.Draw(screen)
 	}
 }
 
-func (w *World) Accessible(point *tile.Point) bool {
-	tile := w.TileAt(point)
+func (w *World) reachable(point *point.Point) bool {
+	tile := w.tileAt(point)
 	if tile == nil {
 		return false
 	}
-	return tile.Accessible()
+	return tile.Reachable()
 }
 
-func (w *World) TileAt(point *tile.Point) *tile.Tile {
-	for _, tile := range w.tileSet {
+func (w *World) tileAt(point *point.Point) *tile.Tile {
+	for _, tile := range w.tiles {
 		if tile.Point().Equals(point) {
 			return tile
 		}
