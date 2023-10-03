@@ -5,7 +5,7 @@ import (
 	"github.com/josimarz/gopher-pacman/internal/game/world"
 )
 
-func DepthFirstSearch(curr, goal *point.Point) Stack[point.Point] {
+func DFS(curr, goal *point.Point) Stack[point.Point] {
 	visited := []*point.Point{}
 	root := &Node{
 		point: curr,

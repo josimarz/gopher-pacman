@@ -141,7 +141,7 @@ func (g *Ghost) move() {
 func (g *Ghost) goHome() {
 	g.goingHome = true
 	goal := point.New(10*tile.Size, 9*tile.Size)
-	g.path = ia.DepthFirstSearch(g.currPoint, goal)
+	g.path = ia.DFS(g.currPoint, goal)
 }
 
 func (g *Ghost) recreatePath() {
@@ -159,7 +159,7 @@ func (g *Ghost) recreatePath() {
 			break
 		}
 	}
-	g.path = ia.DepthFirstSearch(g.currPoint, goal)
+	g.path = ia.DFS(g.currPoint, goal)
 }
 
 func (g *Ghost) moveX() {
