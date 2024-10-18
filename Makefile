@@ -1,2 +1,5 @@
 run:
-	go run cmd/main.go
+	go run ./cmd/game
+
+build:
+	go build -ldflags='-s' -o ./bin/gopher-pacman ./cmd/game
